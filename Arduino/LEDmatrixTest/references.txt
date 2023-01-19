@@ -1,0 +1,8 @@
+
+// tinkercad testing: 16 x 16 matrix (old)
+// https://www.tinkercad.com/things/6zZfBdzxpnf-leetchess/editel
+
+// reference:
+// https://www.tinkercad.com/things/6zZfBdzxpnf-dazzling-snicket/editel?tenant=circuits
+// https://www.tinkercad.com/things/ipT19Fd9uXQ-fabulous-luulia-amur/editel?sharecode=mgtLCh8mOluWIWKFgePiFf8DEEMq6n7NJTlxXU7f0uQ
+// https://forum.arduino.cc/t/8x8-led-matrix-build-using-ws2811-led-strip/863468
