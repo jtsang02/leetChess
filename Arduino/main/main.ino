@@ -64,6 +64,7 @@ void loop() {
 
 //////////////////////////////////////////// NEOPIXEL FUNCTIONS ////////////////////////////////////////////
 
+
 // turn on LED at (x, y)
 void setLED(int x, int y) {
   Serial.print("LED is on at: ");

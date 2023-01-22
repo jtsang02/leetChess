@@ -1,19 +1,13 @@
-/*
-  Test of 6 x 6 Reed Switches
-  using input pins 2-7 for columns
-  and input pins 8-13 for rows
-*/
-
 #include <Adafruit_NeoPixel.h>
 #define BOARD_SIZE 8               // number of columns and rows in the board
 #define N_LEDS 8 * 8               // number of individual LEDs in one neopixel strip
 #define BOARD_PIN 12               // pin for the neopixel strip
+
 int columnPins[] = {8, 9, 10, 11}; // pins for columns
 int rowPins[] = {2, 3, 4, 6};      // pins for rows
 
-
 // map 8 x 8 matrix to 64 LEDs
-const int matrix[8][8] = {
+const int LED_matrix[BOARD_SIZE][BOARD_SIZE] = {
   {0, 1, 2, 3, 4, 5, 6, 7},
   {8, 9, 10, 11, 12, 13, 14, 15},
   {16, 17, 18, 19, 20, 21, 22, 23},
@@ -25,7 +19,9 @@ const int matrix[8][8] = {
 };
 
 // boolean matrix to store the state of the board
-int board[BOARD_SIZE][BOARD_SIZE] = {
+int board[BOARD_SIZE][BOARD_SIZE];
+
+const int initBoard[BOARD_SIZE][BOARD_SIZE] = {
   {1, 1, 1, 1, 1, 1, 1, 1},
   {1, 1, 1, 1, 1, 1, 1, 1},
   {0, 0, 0, 0, 0, 0, 0, 0},
@@ -35,6 +31,10 @@ int board[BOARD_SIZE][BOARD_SIZE] = {
   {1, 1, 1, 1, 1, 1, 1, 1},
   {1, 1, 1, 1, 1, 1, 1, 1}
 };
+
+// create neopixel strip
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LEDS, BOARD_PIN, NEO_GRB + NEO_KHZ800); // tkcad testing
+uint32_t c = strip.Color(255, 0, 0); // tkcad testing
 
 void setup(){
   // initialize serial communication
@@ -48,20 +48,30 @@ void setup(){
   for (int i = 0; i < sizeof(rowPins) / sizeof(int); i++)
     pinMode(rowPins[i], INPUT);
 
-  /*
-    initialize neopixel strip here // TODO
-  */
+  // initialize neopixel strip
+  strip.show();
+  strip.setPin(BOARD_PIN);
+
+  // initialize board state
+  for (int i = 0; i < BOARD_SIZE; i++)
+    for (int j = 0; j < BOARD_SIZE; j++)
+      board[i][j] = initBoard[i][j];
+
+  // print board state
+  printBoardState();
 }
 
 void loop() {
-  // constantly check for changes in the grid
-  checkGrid();
+  // get the state of the board
+  getBoardState();
+  testLEDs();
   delay(1000);
 }
 
-/*
-  ///////////////////////////////functions/////////////////////////////////////
-*/ 
+//=================================================================================================//
+// functions to update pattern on board
+//=================================================================================================//
+
 void getBoardState() {
   // loop through columns
   for (int i = 0; i < sizeof(columnPins) / sizeof(int); i++) {
@@ -84,42 +94,54 @@ void getBoardState() {
   }
 }
 
-// check the grid for changes
-void checkGrid() {
-  for (int i = 0; i < sizeof(columnPins) / sizeof(int); i++)
-  {
-    digitalWrite(columnPins[i], HIGH);
-    for (int j = 0; j < sizeof(rowPins) / sizeof(int); j++)
-    {
-      if (digitalRead(rowPins[j]) == HIGH)
-        setLED(i, j); // TODO: update to setLED(x, y) function
-      else
-        clearLED(i, j); // TODO: update to clearLED(x, y) function
-    }
-    digitalWrite(columnPins[i], LOW);
+void printBoardState() {
+  for (int i = 0; i < BOARD_SIZE; i++) {
+    for (int j = 0; j < BOARD_SIZE; j++)
+      Serial.print(board[i][j]);
+    Serial.println();
   }
 }
 
+//=================================================================================================//
+// functions to update NeoPixel strip
+//=================================================================================================//
+
+void testLEDs() {
+  allLEDsOn();
+  delay(1000);
+  allLEDsOff();
+  delay(1000);
+}
+
+void allLEDsOn() {
+  strip.fill(c, 0, N_LEDS);
+  strip.show();
+}
+
+// turn off all LEDs
+void allLEDsOff() {
+  strip.clear();
+  strip.show();
+}
+
 // turn on LED at (x, y)
-void setLED(int x, int y)
-{
+void setLED(int x, int y) {
   Serial.print("LED is on at: ");
   Serial.print(x);
   Serial.print(',');
   Serial.print(y);
   Serial.println();
-  // strip.setPixelColor(matrix[x][y], c);
-  // strip.show();
+  strip.setPixelColor(LED_matrix[x][y], c);
+  strip.show();
 }
 
 // turn off a single LED
-void clearLED(int x, int y)
-{
-  //  Serial.print("LED is off at: ");
-  //  Serial.print(x);
-  //  Serial.print(',');
-  //  Serial.print(y);
-  //  Serial.println();
-  // strip.setPixelColor(matrix[x][y], strip.Color(0, 0, 0, 0));
-  // strip.show();
+void clearLED(int x, int y) {
+   Serial.print("LED is off at: ");
+   Serial.print(x);
+   Serial.print(',');
+   Serial.print(y);
+   Serial.println();
+  strip.setPixelColor(LED_matrix[x][y], strip.Color(0, 0, 0, 0));
+  strip.show();
 }
