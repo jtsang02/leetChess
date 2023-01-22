@@ -1,7 +1,7 @@
 #ifndef game_h
 #define game_h
 #include <Arduino.h>
-#include <Adafuit_NeoPixel.h>
+#include <Adafruit_NeoPixel.h>
 
 // typedef Adafruit_Neopixel np;
 
@@ -11,6 +11,8 @@ class Game {
         Game(int boardPin, int* columnPins, int* rowPins);
         void getBoardState();
         void readBoard();
+        void printBoard();
+        void testLED(Adafruit_NeoPixel &strip, int N_LEDS, uint32_t c);
 
     private:
         int boardPin;

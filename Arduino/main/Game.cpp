@@ -55,6 +55,24 @@ void Game::readBoard() {
     }
 }
 
+void Game::printBoard() {
+    Serial.println("Printing board...");
+    for (int i = 0; i < sizeof(columnPins) / sizeof(int); i++) {
+        for (int j = 0; j < sizeof(rowPins) / sizeof(int); j++) {
+            Serial.print(board[i][j]);
+            Serial.print(' ');
+        }
+        Serial.println();
+    }
+}
+
+// test LED
+void Game::testLED(Adafruit_NeoPixel &strip, int N_LEDS, uint32_t c) {
+    Serial.println("Testing LED...");
+    strip.fill(c, 0, N_LEDS);
+    strip.show();
+}
+
 // turn on LED at (x, y)
 void Game::setLED(int x, int y) {
   Serial.print("LED is on at: ");

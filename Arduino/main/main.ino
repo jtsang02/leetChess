@@ -7,15 +7,14 @@
 #include <Adafruit_NeoPixel.h>
 #include "Game.h"
 
-
-int N_LEDS  = 8 * 8;               // number of individual LEDs in one neopixel strip
-int BOARD_SIZE = 8;                // number of columns and rows in the board
-int BOARD_PIN = 12;               // pin for the neopixel strip
+#define N_LEDS 8 * 8               // number of individual LEDs in one neopixel strip
+#define BOARD_SIZE 8               // number of columns and rows in the board
+#define BOARD_PIN = 12;               // pin for the neopixel strip
 int columnPins[] = {8, 9, 10, 11}; // pins for columns
 int rowPins[] = {2, 3, 4, 6};      // pins for rows
 
 // map 8 x 8 matrix to 64 LEDs 
-const int matrix[8][8] = {
+const int matrix[BOARD_SIZE][BOARD_SIZE] = {
   {0, 1, 2, 3, 4, 5, 6, 7},
   {8, 9, 10, 11, 12, 13, 14, 15},
   {16, 17, 18, 19, 20, 21, 22, 23},
@@ -52,10 +51,6 @@ void setup(){
   strip.setPin(BOARD_PIN);
 
   chessGame.getBoardState();
-
-  /*
-    initialize neopixel strip here // TODO
-  */
   
 }
 
@@ -65,4 +60,28 @@ void loop() {
   // read the board
   chessGame.readBoard();
   delay(1000);
+}
+
+//////////////////////////////////////////// NEOPIXEL FUNCTIONS ////////////////////////////////////////////
+
+// turn on LED at (x, y)
+void setLED(int x, int y) {
+  Serial.print("LED is on at: ");
+  Serial.print(x);
+  Serial.print(',');
+  Serial.print(y);
+  Serial.println();
+  strip.setPixelColor(matrix[x][y], c);
+  strip.show();
+}
+
+// turn off a single LED
+void clearLED(int x, int y) {
+   Serial.print("LED is off at: ");
+   Serial.print(x);
+   Serial.print(',');
+   Serial.print(y);
+   Serial.println();
+  strip.setPixelColor(matrix[x][y], strip.Color(0, 0, 0, 0));
+  strip.show();
 }
