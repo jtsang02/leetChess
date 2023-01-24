@@ -1,25 +1,30 @@
+// test code here: https://www.tinkercad.com/things/iJSs6KtR5pe-leetchess-8-x-8-matrix/editel
+
 #include <Adafruit_NeoPixel.h>
 #define BOARD_SIZE 8               // number of columns and rows in the board
 #define N_LEDS 8 * 8               // number of individual LEDs in one neopixel strip
 #define BOARD_PIN 12               // pin for the neopixel strip
+String msg;                        // string to read and print serial commands
 
 int columnPins[] = {8, 9, 10, 11}; // pins for columns
 int rowPins[] = {2, 3, 4, 6};      // pins for rows
 
 // map 8 x 8 matrix to 64 LEDs
 const int LED_matrix[BOARD_SIZE][BOARD_SIZE] = {
-  {0, 1, 2, 3, 4, 5, 6, 7},
-  {8, 9, 10, 11, 12, 13, 14, 15},
-  {16, 17, 18, 19, 20, 21, 22, 23},
-  {24, 25, 26, 27, 28, 29, 30, 31},
-  {32, 33, 34, 35, 36, 37, 38, 39},
-  {40, 41, 42, 43, 44, 45, 46, 47},
+  {63, 62, 61, 60, 59, 58, 57, 56},
   {48, 49, 50, 51, 52, 53, 54, 55},
-  {56, 57, 58, 59, 60, 61, 62, 63}
+  {47, 46, 45, 44, 43, 42, 41, 40},
+  {32, 33, 34, 35, 36, 37, 38, 39},
+  {31, 30, 29, 28, 27, 26, 25, 24},
+  {16, 17, 18, 19, 20, 21, 22, 23},
+  {15, 14, 13, 12, 11, 10, 9, 8},
+  {0, 1, 2, 3, 4, 5, 6, 7}
 };
 
-// boolean matrix to store the state of the board
+// boolean matrix to store the current state of the board
 int board[BOARD_SIZE][BOARD_SIZE];
+// boolean matrix to store the previous state of the board
+int prevBoard[BOARD_SIZE][BOARD_SIZE];
 
 const int initBoard[BOARD_SIZE][BOARD_SIZE] = {
   {1, 1, 1, 1, 1, 1, 1, 1},
@@ -34,43 +39,68 @@ const int initBoard[BOARD_SIZE][BOARD_SIZE] = {
 
 // create neopixel strip
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LEDS, BOARD_PIN, NEO_GRB + NEO_KHZ800); // tkcad testing
-uint32_t c = strip.Color(255, 0, 0); // tkcad testing
+// color definitions for LED strip
+uint32_t RED = strip.Color(255, 0, 0); // red
+uint32_t GREEN = strip.Color(0, 255, 0); // green
+uint32_t BLUE = strip.Color(0, 0, 255); // blue
+uint32_t YELLOW = strip.Color(255, 255, 0); // yellow
+uint32_t PURPLE = strip.Color(255, 0, 255); // purple
+uint32_t CYAN = strip.Color(0, 255, 255); // cyan
+uint32_t WHITE = strip.Color(255, 255, 255); // white
 
 void setup(){
   // initialize serial communication
   Serial.begin(9600);
-
-  // initialize columns to output
-  for (int i = 0; i < sizeof(columnPins) / sizeof(int); i++)
-    pinMode(columnPins[i], OUTPUT);
-
-  // initialize rows to input
-  for (int i = 0; i < sizeof(rowPins) / sizeof(int); i++)
-    pinMode(rowPins[i], INPUT);
-
+  // initialize board state to initial board state
+  initializeBoard();
   // initialize neopixel strip
   strip.show();
   strip.setPin(BOARD_PIN);
-
-  // initialize board state
-  for (int i = 0; i < BOARD_SIZE; i++)
-    for (int j = 0; j < BOARD_SIZE; j++)
-      board[i][j] = initBoard[i][j];
-
-  // print board state
+  // print board state - this should be the initial board state
   printBoardState();
 }
 
 void loop() {
   // get the state of the board
   getBoardState();
+
+  // main code here
   testLEDs();
+
+  // simulate a move at position (5, 4)
+  changePos(5, 4);
+
+  // check if the board state has changed
+  if (boardStateChanged()) {
+    // print board state
+    printBoardState();
+  }
+
+  // main code ends here
+
+  // update the previous board state
+  updatePrevBoardState();
   delay(1000);
 }
 
 //=================================================================================================//
 // functions to update pattern on board
 //=================================================================================================//
+
+void initializeBoard() {
+
+  // initialize columns to output
+  for (int i = 0; i < sizeof(columnPins) / sizeof(int); i++)
+    pinMode(columnPins[i], OUTPUT);
+  // initialize rows to input
+  for (int i = 0; i < sizeof(rowPins) / sizeof(int); i++)
+    pinMode(rowPins[i], INPUT);
+
+  // initialize board state to initial board state
+  for (int i = 0; i < BOARD_SIZE; i++)
+    for (int j = 0; j < BOARD_SIZE; j++)
+      board[i][j] = initBoard[i][j];
+}
 
 void getBoardState() {
   // loop through columns
@@ -81,25 +111,33 @@ void getBoardState() {
     // loop through rows
     for (int j = 0; j < sizeof(rowPins) / sizeof(int); j++) {
       // if the row is high, set the corresponding board state to 1
-      if (digitalRead(rowPins[j]) == HIGH) {
+      if (digitalRead(rowPins[j]) == HIGH)
         board[i][j] = 1;
-      }
       // if the row is low, set the corresponding board state to 0
-      else {
+      else
         board[i][j] = 0;
-      }
     }
     // set column to low
     digitalWrite(columnPins[i], LOW);
   }
 }
 
-void printBoardState() {
-  for (int i = 0; i < BOARD_SIZE; i++) {
+// check if the board state has changed
+bool boardStateChanged() {
+  // check if the board state has changed since the last time the board state was checked
+  for (int i = 0; i < BOARD_SIZE; i++)
     for (int j = 0; j < BOARD_SIZE; j++)
-      Serial.print(board[i][j]);
-    Serial.println();
-  }
+      if (board[i][j] != prevBoard[i][j])
+        return true;
+  return false;
+}
+
+// update the previous board state
+void updatePrevBoardState() {
+  // update the previous board state to the current board state
+  for (int i = 0; i < BOARD_SIZE; i++)
+    for (int j = 0; j < BOARD_SIZE; j++)
+      prevBoard[i][j] = board[i][j];
 }
 
 //=================================================================================================//
@@ -114,7 +152,7 @@ void testLEDs() {
 }
 
 void allLEDsOn() {
-  strip.fill(c, 0, N_LEDS);
+  strip.fill(RED, 0, N_LEDS);
   strip.show();
 }
 
@@ -127,21 +165,81 @@ void allLEDsOff() {
 // turn on LED at (x, y)
 void setLED(int x, int y) {
   Serial.print("LED is on at: ");
-  Serial.print(x);
-  Serial.print(',');
-  Serial.print(y);
-  Serial.println();
-  strip.setPixelColor(LED_matrix[x][y], c);
+  printPos(x, y);
+  strip.setPixelColor(LED_matrix[x][y], RED);
   strip.show();
 }
 
 // turn off a single LED
 void clearLED(int x, int y) {
    Serial.print("LED is off at: ");
-   Serial.print(x);
-   Serial.print(',');
-   Serial.print(y);
-   Serial.println();
+  printPos(x, y);
   strip.setPixelColor(LED_matrix[x][y], strip.Color(0, 0, 0, 0));
   strip.show();
+}
+
+//=================================================================================================//
+// functions to print to serial monitor for debugging
+//=================================================================================================//
+
+// print the board state to the serial monitor for debugging
+void printBoardState() {
+  for (int i = 0; i < BOARD_SIZE; i++) {
+    for (int j = 0; j < BOARD_SIZE; j++)
+      Serial.print(board[i][j]);
+    Serial.println();
+  }
+}
+
+// print the LED matrix to the serial monitor for debugging
+void printLEDMatrix() {
+  for (int i = 0; i < BOARD_SIZE; i++) {
+    for (int j = 0; j < BOARD_SIZE; j++)
+      Serial.print(LED_matrix[i][j]);
+    Serial.println();
+  }
+}
+
+// print the coordinates of a single piece
+void printPos(int x, int y) {
+  Serial.print(x);
+  Serial.print(',');
+  Serial.print(y);
+  Serial.println();
+}
+
+//=================================================================================================//
+// Raspberry Pi communication functions
+//=================================================================================================//
+ 
+// send a request to the Raspberry Pi
+void sendCommand(String req, String arg) {
+   Serial.println("Cmd: " + req + arg);
+}
+
+// receive a command from the Raspberry Pi
+// TODO: add error checking for invalid commands
+// TODO: add conditions for different commands
+void receiveCommand() {
+  // if there is data to read
+   if (Serial.available() > 0) {  // Check if there is data coming
+    msg = Serial.readString();    // Read the message as String
+    Serial.println("Command: " + msg);
+    }
+}
+
+//=================================================================================================//
+// functions to simulate making a move on the board (for testing)
+//=================================================================================================//
+ 
+// simulate changing the board state
+void changePos(int x, int y) {
+  board[x][y] = !board[x][y];
+  sendCommand("changePos at ", "" + String(x) + "," + String(y) + " to " + String(board[x][y]));
+  // turn on LED at (x, y)
+  if (board[x][y] == 1)
+    setLED(x, y);
+  // turn off LED at (x, y)
+  else
+    clearLED(x, y);
 }
