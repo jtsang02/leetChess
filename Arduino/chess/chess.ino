@@ -11,14 +11,14 @@ int rowPins[] = {2, 3, 4, 6};      // pins for rows
 
 // map 8 x 8 matrix to 64 LEDs
 const int LED_matrix[BOARD_SIZE][BOARD_SIZE] = {
-  {63, 62, 61, 60, 59, 58, 57, 56},
-  {48, 49, 50, 51, 52, 53, 54, 55},
-  {47, 46, 45, 44, 43, 42, 41, 40},
-  {32, 33, 34, 35, 36, 37, 38, 39},
-  {31, 30, 29, 28, 27, 26, 25, 24},
-  {16, 17, 18, 19, 20, 21, 22, 23},
+  {0, 1, 2, 3, 4, 5, 6, 7},
   {15, 14, 13, 12, 11, 10, 9, 8},
-  {0, 1, 2, 3, 4, 5, 6, 7}
+  {16, 17, 18, 19, 20, 21, 22, 23},
+  {31, 30, 29, 28, 27, 26, 25, 24},
+  {32, 33, 34, 35, 36, 37, 38, 39},
+  {47, 46, 45, 44, 43, 42, 41, 40},
+  {48, 49, 50, 51, 52, 53, 54, 55},
+  {63, 62, 61, 60, 59, 58, 57, 56}
 };
 
 // boolean matrix to store the current state of the board
@@ -37,8 +37,17 @@ const int initBoard[BOARD_SIZE][BOARD_SIZE] = {
   {1, 1, 1, 1, 1, 1, 1, 1}
 };
 
-// create neopixel strip
+// create neopixel object
+// Argument 1 = Number of pixels in NeoPixel strip
+// Argument 2 = Arduino pin number (most are valid)
+// Argument 3 = Pixel type flags, add together as needed:
+//   NEO_KHZ800  800 KHz bitstream (most NeoPixel products w/WS2812 LEDs)
+//   NEO_KHZ400  400 KHz (classic 'v1' (not v2) FLORA pixels, WS2811 drivers)
+//   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
+//   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
+//   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LEDS, BOARD_PIN, NEO_GRB + NEO_KHZ800); // tkcad testing
+//Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LEDS, BOARD_PIN, NEO_RGBW + NEO_KHZ800); // physical testing
 // color definitions for LED strip
 uint32_t RED = strip.Color(255, 0, 0); // red
 uint32_t GREEN = strip.Color(0, 255, 0); // green
@@ -65,10 +74,9 @@ void loop() {
   getBoardState();
 
   // main code here
-  testLEDs();
 
   // simulate a move at position (5, 4)
-  changePos(5, 4);
+  changePos(0, 7);
 
   // check if the board state has changed
   if (boardStateChanged()) {
@@ -166,7 +174,7 @@ void allLEDsOff() {
 void setLED(int x, int y) {
   Serial.print("LED is on at: ");
   printPos(x, y);
-  strip.setPixelColor(LED_matrix[x][y], RED);
+  strip.setPixelColor(LED_matrix[y][x], RED);
   strip.show();
 }
 
@@ -174,7 +182,7 @@ void setLED(int x, int y) {
 void clearLED(int x, int y) {
    Serial.print("LED is off at: ");
   printPos(x, y);
-  strip.setPixelColor(LED_matrix[x][y], strip.Color(0, 0, 0, 0));
+  strip.setPixelColor(LED_matrix[y][x], strip.Color(0, 0, 0, 0));
   strip.show();
 }
 
@@ -234,10 +242,10 @@ void receiveCommand() {
  
 // simulate changing the board state
 void changePos(int x, int y) {
-  board[x][y] = !board[x][y];
-  sendCommand("changePos at ", "" + String(x) + "," + String(y) + " to " + String(board[x][y]));
+  board[y][x] = !board[y][x];
+  sendCommand("changePos at ", "" + String(x) + "," + String(y) + " to " + String(board[y][x]));
   // turn on LED at (x, y)
-  if (board[x][y] == 1)
+  if (board[y][x] == 1)
     setLED(x, y);
   // turn off LED at (x, y)
   else
