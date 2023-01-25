@@ -70,27 +70,32 @@ void setup(){
 }
 
 void loop() {
+  
+  // simulate a move at position (x, y)
+  changePos(0, 7);
+  mainLoop();
+}
+
+// main code here
+void mainLoop() {
+  
   // get the state of the board
   getBoardState();
 
-  // main code here
-
-  // simulate a move at position (5, 4)
-  changePos(0, 7);
-
   // check if the board state has changed
-  if (boardStateChanged()) {
-    // print board state
-    printBoardState();
-  }
+  if (!boardStateChanged())
+    return;
 
-  // main code ends here
+  // check correct turn
+  if (!userTurn())
+    return;
+    
+  printBoardState();
 
   // update the previous board state
   updatePrevBoardState();
   delay(1000);
 }
-
 //=================================================================================================//
 // functions to update pattern on board
 //=================================================================================================//
@@ -137,6 +142,21 @@ bool boardStateChanged() {
     for (int j = 0; j < BOARD_SIZE; j++)
       if (board[i][j] != prevBoard[i][j])
         return true;
+  return false;
+}
+
+// check who's turn it is (user or computer)
+bool userTurn() {
+  // send a request to the computer to check who's turn it is
+  sendCommand("checkTurn", "");
+  // wait for a response from the computer
+  while (Serial.available() == 0);
+  String response = Serial.readStringUntil('\n'); // read the response from the computer
+  if (response == "user")
+    return true;
+  if (response == "computer")
+    return false;
+
   return false;
 }
 
@@ -230,14 +250,14 @@ void sendCommand(String req, String arg) {
 // TODO: add conditions for different commands
 void receiveCommand() {
   // if there is data to read
-   if (Serial.available() > 0) {  // Check if there is data coming
+  if (Serial.available() > 0) {  // Check if there is data coming
     msg = Serial.readString();    // Read the message as String
     Serial.println("Command: " + msg);
-    }
+  }
 }
 
 //=================================================================================================//
-// functions to simulate making a move on the board (for testing)
+// functions to simulate making a move on the board (for testing) - to be removed later
 //=================================================================================================//
  
 // simulate changing the board state
