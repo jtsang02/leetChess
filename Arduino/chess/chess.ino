@@ -1,13 +1,13 @@
 // test code here: https://www.tinkercad.com/things/iJSs6KtR5pe-leetchess-8-x-8-matrix/editel
 
 #include <Adafruit_NeoPixel.h>
-#define BOARD_SIZE 8               // number of columns and rows in the board
-#define N_LEDS 8 * 8               // number of individual LEDs in one neopixel strip
-#define BOARD_PIN 12               // pin for the neopixel strip
-String msg;                        // string to read and print serial commands
+#define BOARD_SIZE 8                // number of columns and rows in the board
+#define N_LEDS 64                   // number of individual LEDs in one neopixel strip
+#define BOARD_PIN 12                // pin for the neopixel strip
+String msg;                         // string to read and print serial commands
 
-int columnPins[] = {8, 9, 10, 11}; // pins for columns
-int rowPins[] = {2, 3, 4, 6};      // pins for rows
+int columnPins[] = {8, 9, 10, 11};  // pins for columns
+int rowPins[] = {2, 3, 4, 6};       // pins for rows
 
 // map 8 x 8 matrix to 64 LEDs
 const int LED_matrix[BOARD_SIZE][BOARD_SIZE] = {
@@ -65,6 +65,7 @@ void setup(){
   // initialize neopixel strip
   strip.show();
   strip.setPin(BOARD_PIN);
+  allLEDsOff();
   // print board state - this should be the initial board state
   printBoardState();
 }
@@ -72,7 +73,7 @@ void setup(){
 void loop() {
   
   // simulate a move at position (x, y)
-  changePos(0, 7);
+  // changePos(0, 7);
   mainLoop();
 }
 
