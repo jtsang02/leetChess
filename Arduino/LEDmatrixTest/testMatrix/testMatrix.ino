@@ -19,15 +19,15 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LEDS, BOARD_PIN, NEO_GRB + NEO_KHZ
 
 // set default color
 // uint32_t c = strip.Color(0, 255, 0, 0); // physical testing
-uint32_t GREEN = strip.Color(255, 0, 0);     // red
-uint32_t RED = strip.Color(0, 255, 0);       // green
+uint32_t RED = strip.Color(255, 0, 0);       // red
+uint32_t GREEN = strip.Color(0, 255, 0);     // green
 uint32_t BLUE = strip.Color(0, 0, 255);      // blue
 uint32_t YELLOW = strip.Color(255, 255, 0);  // yellow
 uint32_t PURPLE = strip.Color(255, 0, 255);  // purple
 uint32_t CYAN = strip.Color(0, 255, 255);    // cyan
 uint32_t WHITE = strip.Color(255, 255, 255); // white
 // set default color
-uint32_t c = CYAN;
+uint32_t c = RED;
 
 // map 8 x 8 matrix to 64 LEDs
 const int matrix[8][8] = {
