@@ -1,10 +1,10 @@
 // test code here: https://www.tinkercad.com/things/iJSs6KtR5pe-leetchess-8-x-8-matrix/editel
-
 #include <Adafruit_NeoPixel.h>
+
 #define BOARD_SIZE 8                // number of columns and rows in the board
 #define N_LEDS 64                   // number of individual LEDs in one neopixel strip
 #define BOARD_PIN 12                // pin for the neopixel strip
-String msg;                         // string to read and print serial commands
+String msg = "starting...";         // string to read and print serial commands
 
 int columnPins[] = {8, 9, 10, 11};  // pins for columns
 int rowPins[] = {2, 3, 4, 6};       // pins for rows
@@ -38,16 +38,13 @@ const int initBoard[BOARD_SIZE][BOARD_SIZE] = {
 };
 
 // create neopixel object
-// Argument 1 = Number of pixels in NeoPixel strip
-// Argument 2 = Arduino pin number (most are valid)
-// Argument 3 = Pixel type flags, add together as needed:
+// Argument 1 - Number of pixels in NeoPixel strip
+// Argument 2 - Arduino pin number (most are valid)
+// Argument 3 - Pixel type flags, add together as needed
 //   NEO_KHZ800  800 KHz bitstream (most NeoPixel products w/WS2812 LEDs)
-//   NEO_KHZ400  400 KHz (classic 'v1' (not v2) FLORA pixels, WS2811 drivers)
 //   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
-//   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
-//   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LEDS, BOARD_PIN, NEO_GRB + NEO_KHZ800); // tkcad testing
-//Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LEDS, BOARD_PIN, NEO_RGBW + NEO_KHZ800); // physical testing
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LEDS, BOARD_PIN, NEO_GRB + NEO_KHZ800); // physical testing
+
 // color definitions for LED strip
 uint32_t RED = strip.Color(255, 0, 0); // red
 uint32_t GREEN = strip.Color(0, 255, 0); // green
@@ -57,12 +54,13 @@ uint32_t PURPLE = strip.Color(255, 0, 255); // purple
 uint32_t CYAN = strip.Color(0, 255, 255); // cyan
 uint32_t WHITE = strip.Color(255, 255, 255); // white
 
-void setup(){
+void setup() {
   // initialize serial communication
   Serial.begin(9600);
   // initialize board state to initial board state
   initializeBoard();
   // initialize neopixel strip
+  strip.begin();
   strip.show();
   strip.setPin(BOARD_PIN);
   allLEDsOff();
@@ -73,27 +71,49 @@ void setup(){
 void loop() {
   
   // simulate a move at position (x, y)
-  // changePos(0, 7);
+  changePos(7, 0);
   mainLoop();
 }
 
 // main code here
 void mainLoop() {
+
+  // for testing purposes: REMOVE LATER
+  test();
   
   // get the state of the board
   getBoardState();
-
   // check if the board state has changed
   if (!boardStateChanged())
     return;
-
   // check correct turn
-  if (!userTurn())
+  if (!userTurn()) {
+    // TODO:
+    // send request for computer's moves to Raspberry Pi
+    // get legal moves from Raspberry Pi
+    // update the board state
+    // update the previous board state
+    // print board state
     return;
-    
-  printBoardState();
+  }
 
+  // send request for user's moves from Raspberry Pi
+  // update the board state
   // update the previous board state
+  // highlight the user's move on the LED strip
+  // print board state
+  String usersMove = requestUserMove();
+  if (usersMove == "error") {
+    Serial.println("error"); // send error message to Raspberry Pi
+    return;
+  }
+
+  highlightMove(usersMove);         // to be implemented
+  // update the board state
+  // updateBoardState(usersMove);      // to be implemented
+
+  printBoardState();
+  // update the previous board state - last step
   updatePrevBoardState();
   delay(1000);
 }
@@ -207,6 +227,19 @@ void clearLED(int x, int y) {
   strip.show();
 }
 
+void highlightMove(String move) {
+  // parse commas separated string into x and y coordinates
+  // e.g "1,2" -> x = 1, y = 2, "3,4" -> x = 3, y = 4
+  // test: [(0,0),(0,1),(0,2)]
+  while (move.indexOf(",") != -1) {
+    int commaIndex = move.indexOf(",");
+    int x = move.substring(commaIndex - 1, commaIndex).toInt();  // might need a switch statement here
+    int y = move.substring(commaIndex + 1).toInt();
+    setLED(x, y);
+    move = move.substring(commaIndex + 1);  // remove the first coordinate from the string
+  }
+}
+
 //=================================================================================================//
 // functions to print to serial monitor for debugging
 //=================================================================================================//
@@ -243,18 +276,28 @@ void printPos(int x, int y) {
  
 // send a request to the Raspberry Pi
 void sendCommand(String req, String arg) {
-   Serial.println("Cmd: " + req + arg);
+   Serial.println("Cmd: " + req + " " + arg);
 }
 
 // receive a command from the Raspberry Pi
 // TODO: add error checking for invalid commands
 // TODO: add conditions for different commands
-void receiveCommand() {
+String receiveCommand() {
   // if there is data to read
-  if (Serial.available() > 0) {  // Check if there is data coming
-    msg = Serial.readString();    // Read the message as String
-    Serial.println("Command: " + msg);
-  }
+  String data = "";
+  while (Serial.available() == 0);     // Wait for data to be available on the serial port
+  data = Serial.readStringUntil('\n'); // Read the message as String
+  Serial.println("PI response: " + data);
+  return data;
+}
+
+// request the Raspberry Pi to make a move
+String requestUserMove() {
+  Serial.println("Requesting user move from PI...");
+  sendCommand("makeMove", "user");  // do we need to include coordinates of piece moved?
+  
+  // wait for a response from the Raspberry Pi
+  return receiveCommand(); // this should be the coordinates of the piece moved as a string separated by a comma
 }
 
 //=================================================================================================//
@@ -264,11 +307,27 @@ void receiveCommand() {
 // simulate changing the board state
 void changePos(int x, int y) {
   board[y][x] = !board[y][x];
-  sendCommand("changePos at ", "" + String(x) + "," + String(y) + " to " + String(board[y][x]));
+  Serial.println("Simulate position change at "+ String(x) + "," + String(y) + " to " + String(board[y][x]));
   // turn on LED at (x, y)
-  if (board[y][x] == 1)
-    setLED(x, y);
-  // turn off LED at (x, y)
-  else
-    clearLED(x, y);
+  // if (board[y][x] == 1)
+  //   setLED(x, y);
+  // // turn off LED at (x, y)
+  // else
+  //   clearLED(x, y);
+}
+
+// simulate the PI telling the Arduino to make a move
+void test() {
+  while (Serial.available() == 0);
+  String command = Serial.readStringUntil('\n');
+  Serial.println("Command received: " + command);
+  if (command == "off") {
+    allLEDsOff();
+  }
+  else if (command == "on") {
+    allLEDsOn();
+  }
+  else if (command == "continue" || command == "c" || command == "")
+    return;
+  
 }
