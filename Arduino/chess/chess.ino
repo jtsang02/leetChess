@@ -71,7 +71,7 @@ void setup() {
 void loop() {
   
   // simulate a move at position (x, y)
-  changePos(7, 0);
+  changePos(3, 6);
   mainLoop();
 }
 
@@ -84,7 +84,8 @@ void mainLoop() {
   // get the state of the board
   getBoardState();
   // check if the board state has changed
-  if (!boardStateChanged())
+  int x, y;   // coordinates of the changed position
+  if (!boardStateChanged(x, y))
     return;
   // check correct turn
   if (!userTurn()) {
@@ -102,13 +103,12 @@ void mainLoop() {
   // update the previous board state
   // highlight the user's move on the LED strip
   // print board state
-  String usersMove = requestUserMove();
+  String usersMove = requestUserMove(x, y);
   if (usersMove == "error") {
     Serial.println("error"); // send error message to Raspberry Pi
     return;
   }
-
-  highlightMove(usersMove);         // to be implemented
+  highlightPath(usersMove);    
   // update the board state
   // updateBoardState(usersMove);      // to be implemented
 
@@ -157,12 +157,16 @@ void getBoardState() {
 }
 
 // check if the board state has changed
-bool boardStateChanged() {
+bool boardStateChanged(int& x, int& y) {
   // check if the board state has changed since the last time the board state was checked
   for (int i = 0; i < BOARD_SIZE; i++)
     for (int j = 0; j < BOARD_SIZE; j++)
-      if (board[i][j] != prevBoard[i][j])
+      if (board[i][j] != prevBoard[i][j]) {
+        y = i;
+        x = j;
         return true;
+      }
+        
   return false;
 }
 
@@ -212,10 +216,10 @@ void allLEDsOff() {
 }
 
 // turn on LED at (x, y)
-void setLED(int x, int y) {
+void setLED(int x, int y, uint32_t color) {
   Serial.print("LED is on at: ");
   printPos(x, y);
-  strip.setPixelColor(LED_matrix[y][x], RED);
+  strip.setPixelColor(LED_matrix[y][x], color);
   strip.show();
 }
 
@@ -227,7 +231,7 @@ void clearLED(int x, int y) {
   strip.show();
 }
 
-void highlightMove(String move) {
+void highlightPath(String move) {
   // parse commas separated string into x and y coordinates
   // e.g "1,2" -> x = 1, y = 2, "3,4" -> x = 3, y = 4
   // test: [(0,0),(0,1),(0,2)]
@@ -235,7 +239,7 @@ void highlightMove(String move) {
     int commaIndex = move.indexOf(",");
     int x = move.substring(commaIndex - 1, commaIndex).toInt();  // might need a switch statement here
     int y = move.substring(commaIndex + 1).toInt();
-    setLED(x, y);
+    setLED(x, y, GREEN);
     move = move.substring(commaIndex + 1);  // remove the first coordinate from the string
   }
 }
@@ -292,9 +296,10 @@ String receiveCommand() {
 }
 
 // request the Raspberry Pi to make a move
-String requestUserMove() {
+String requestUserMove(int x, int y) {
   Serial.println("Requesting user move from PI...");
-  sendCommand("makeMove", "user");  // do we need to include coordinates of piece moved?
+  // convert coordinates to a string
+  sendCommand("makeUserMove", String(x) + "," + String(y));  // do we need to include coordinates of piece moved?
   
   // wait for a response from the Raspberry Pi
   return receiveCommand(); // this should be the coordinates of the piece moved as a string separated by a comma
@@ -308,12 +313,6 @@ String requestUserMove() {
 void changePos(int x, int y) {
   board[y][x] = !board[y][x];
   Serial.println("Simulate position change at "+ String(x) + "," + String(y) + " to " + String(board[y][x]));
-  // turn on LED at (x, y)
-  // if (board[y][x] == 1)
-  //   setLED(x, y);
-  // // turn off LED at (x, y)
-  // else
-  //   clearLED(x, y);
 }
 
 // simulate the PI telling the Arduino to make a move
