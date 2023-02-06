@@ -6,7 +6,7 @@
 #define BOARD_PIN 12                // pin for the neopixel strip
 String msg = "starting...";         // string to read and print serial commands
 
-int columnPins[] = {8, 9, 10, 11};  // pins for columns
+int columnPins[] = {8, 9, 10, 11 };  // pins for columns
 int rowPins[] = {2, 3, 4, 6};       // pins for rows
 
 // map 8 x 8 matrix to 64 LEDs
@@ -69,24 +69,26 @@ void setup() {
 }
 
 void loop() {
-  
   // simulate a move at position (x, y)
-  changePos(3, 6);
+  changePos();
+  // main code here
   mainLoop();
 }
 
-// main code here
+// main code here runs repeatedly
 void mainLoop() {
-
-  // for testing purposes: REMOVE LATER
+  // for testing purposes only - to be removed
   test();
-  
-  // get the state of the board
+
+  // get the state of the board - comment out for testing purposes
   getBoardState();
   // check if the board state has changed
-  int x, y;   // coordinates of the changed position
-  if (!boardStateChanged(x, y))
+  int x1, y1;   // coordinates of the changed position
+  if (!boardStateChanged(x1, y1)) {
+    Serial.println("no change"); // send no change message to Raspberry Pi
     return;
+  }
+    
   // check correct turn
   if (!userTurn()) {
     // TODO:
@@ -98,31 +100,50 @@ void mainLoop() {
     return;
   }
 
-  // send request for user's moves from Raspberry Pi
-  // update the board state
-  // update the previous board state
-  // highlight the user's move on the LED strip
-  // print board state
-  String usersMove = requestUserMove(x, y);
+  String usersMove = requestUserMove(x1, y1);
   if (usersMove == "error") {
     Serial.println("error"); // send error message to Raspberry Pi
     return;
   }
-  highlightPath(usersMove);    
-  // update the board state
-  // updateBoardState(usersMove);      // to be implemented
+  highlightPath(usersMove);
+  int x2, y2;  // coordinates of the second piece's position
+  bool secondPieceMoved = false;
 
+  // check if the board state has changed again - second piece moved on same turn
+  while (!secondPieceMoved) {
+    Serial.println("waiting for second piece to move...");
+    updatePrevBoardState();
+    delay(100);
+    getBoardState();
+    delay(100);
+    secondPieceMoved = boardStateChanged(x2, y2);
+  }
+
+  // if piece x1, y1 is placed back on its original position
+  if (x1 == x2 && y1 == y2) {
+    Serial.println("piece moved back to original position");
+    return;
+  } 
+  // if piece x1, y1 is placed on a different position
+  // check if the move is legal
+  if (!legalMove(x1, y1, x2, y2)) {
+    Serial.println("illegal move");
+    blinkLED(x2, y2, RED, 3);
+    return;
+  }
+  // if the move is legal, update the board state send to Raspberry Pi
+  updateBoard(x1, x2, y1, y2);
   printBoardState();
   // update the previous board state - last step
   updatePrevBoardState();
   delay(1000);
 }
+
 //=================================================================================================//
-// functions to update pattern on board
+// functions to update/track the board state
 //=================================================================================================//
 
 void initializeBoard() {
-
   // initialize columns to output
   for (int i = 0; i < sizeof(columnPins) / sizeof(int); i++)
     pinMode(columnPins[i], OUTPUT);
@@ -165,8 +186,7 @@ bool boardStateChanged(int& x, int& y) {
         y = i;
         x = j;
         return true;
-      }
-        
+      }    
   return false;
 }
 
@@ -185,6 +205,29 @@ bool userTurn() {
   return false;
 }
 
+bool legalMove(int x1, int y1, int x2, int y2) {
+  // send a request to the computer to check if the move is legal
+  sendCommand("checkMove", String(x1) + "," + String(y1) + "," + String(x2) + "," + String(y2));
+  // wait for a response from the computer
+  while (Serial.available() == 0);
+  String response = Serial.readStringUntil('\n'); // read the response from the computer
+  if (response == "legal")
+    return true;
+  if (response == "illegal")
+    return false;
+  return false;
+}
+
+void updateBoard(int x1, int y1, int x2, int y2) {
+  // send a request to the computer to update the board state
+  sendCommand("updateBoard", String(x1) + "," + String(y1) + "," + String(x2) + "," + String(y2));
+  // wait for a response from the computer
+  while (Serial.available() == 0);
+  String response = Serial.readStringUntil('\n'); // read the response from the computer
+  if (response == "updated")
+    return;
+}
+
 // update the previous board state
 void updatePrevBoardState() {
   // update the previous board state to the current board state
@@ -197,15 +240,8 @@ void updatePrevBoardState() {
 // functions to update NeoPixel strip
 //=================================================================================================//
 
-void testLEDs() {
-  allLEDsOn();
-  delay(1000);
-  allLEDsOff();
-  delay(1000);
-}
-
 void allLEDsOn() {
-  strip.fill(RED, 0, N_LEDS);
+  strip.fill(WHITE, 0, N_LEDS);
   strip.show();
 }
 
@@ -213,6 +249,15 @@ void allLEDsOn() {
 void allLEDsOff() {
   strip.clear();
   strip.show();
+}
+
+void blinkLED(int x, int y, uint32_t color, int reps) {
+  for (int i = 0; i < reps; i++) {
+    setLED(x, y, color);
+    delay(500);
+    clearLED(x, y);
+    delay(500);
+  }
 }
 
 // turn on LED at (x, y)
@@ -234,7 +279,7 @@ void clearLED(int x, int y) {
 void highlightPath(String move) {
   // parse commas separated string into x and y coordinates
   // e.g "1,2" -> x = 1, y = 2, "3,4" -> x = 3, y = 4
-  // test: [(0,0),(0,1),(0,2)]
+  // test: [(0,0)(0,1)(0,2)]
   while (move.indexOf(",") != -1) {
     int commaIndex = move.indexOf(",");
     int x = move.substring(commaIndex - 1, commaIndex).toInt();  // might need a switch statement here
@@ -268,10 +313,11 @@ void printLEDMatrix() {
 
 // print the coordinates of a single piece
 void printPos(int x, int y) {
+  Serial.print("(");
   Serial.print(x);
-  Serial.print(',');
+  Serial.print(",");
   Serial.print(y);
-  Serial.println();
+  Serial.println(")");
 }
 
 //=================================================================================================//
@@ -291,7 +337,7 @@ String receiveCommand() {
   String data = "";
   while (Serial.available() == 0);     // Wait for data to be available on the serial port
   data = Serial.readStringUntil('\n'); // Read the message as String
-  Serial.println("PI response: " + data);
+  Serial.println("PI: " + data);
   return data;
 }
 
@@ -300,7 +346,6 @@ String requestUserMove(int x, int y) {
   Serial.println("Requesting user move from PI...");
   // convert coordinates to a string
   sendCommand("makeUserMove", String(x) + "," + String(y));  // do we need to include coordinates of piece moved?
-  
   // wait for a response from the Raspberry Pi
   return receiveCommand(); // this should be the coordinates of the piece moved as a string separated by a comma
 }
@@ -310,13 +355,28 @@ String requestUserMove(int x, int y) {
 //=================================================================================================//
  
 // simulate changing the board state
-void changePos(int x, int y) {
+void changePos() {
+  Serial.println("SIM: Enter coordinate to change (x,y): ");
+  while (Serial.available() == 0);
+  String position = Serial.readStringUntil('\n');
+  // if position is not (x,y)
+  if (position.indexOf(",") == -1) {
+    Serial.println("Invalid position");
+    return;
+  }
+  int commaIndex = position.indexOf(",");
+  int x = position.substring(commaIndex - 1, commaIndex).toInt();
+  int y = position.substring(commaIndex + 1).toInt();
   board[y][x] = !board[y][x];
-  Serial.println("Simulate position change at "+ String(x) + "," + String(y) + " to " + String(board[y][x]));
+  Serial.println("SIM: position change at "+ String(x) + "," + String(y) + " from " + !board[y][x] + " to " + board[y][x]);
 }
 
 // simulate the PI telling the Arduino to make a move
 void test() {
+  Serial.println("Testing Environment. Choose a command: ");
+  Serial.println("1. 'off' for all LEDs off");
+  Serial.println("2. 'on' for all LEDs on");
+  Serial.println("3. 'c' to continue testing main program");
   while (Serial.available() == 0);
   String command = Serial.readStringUntil('\n');
   Serial.println("Command received: " + command);
@@ -326,7 +386,7 @@ void test() {
   else if (command == "on") {
     allLEDsOn();
   }
-  else if (command == "continue" || command == "c" || command == "")
+  else if (command == "c") {
     return;
-  
+  }
 }
