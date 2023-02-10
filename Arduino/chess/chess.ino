@@ -4,10 +4,10 @@
 #define BOARD_SIZE 8                // number of columns and rows in the board
 #define N_LEDS 64                   // number of individual LEDs in one neopixel strip
 #define BOARD_PIN 12                // pin for the neopixel strip
-String msg = "starting...";         // string to read and print serial commands
+String msg = "starting board...";         // string to read and print serial commands
 
-int columnPins[] = {8, 9, 10, 11 };  // pins for columns
-int rowPins[] = {2, 3, 4, 6};       // pins for rows
+int columnPins[] = {2, 3, 4, 5, 6, 7, 8, 9};  // pins for columns
+int rowPins[] = {23, 25, 27, 29, 31, 33, 35, 37};       // pins for rows
 
 // map 8 x 8 matrix to 64 LEDs
 const int LED_matrix[BOARD_SIZE][BOARD_SIZE] = {
@@ -81,7 +81,7 @@ void mainLoop() {
   test();
 
   // get the state of the board - comment out for testing purposes
-  getBoardState();
+  // getBoardState();
   // check if the board state has changed
   int x1, y1;   // coordinates of the changed position
   if (!boardStateChanged(x1, y1)) {
@@ -112,6 +112,7 @@ void mainLoop() {
   // check if the board state has changed again - second piece moved on same turn
   while (!secondPieceMoved) {
     Serial.println("waiting for second piece to move...");
+    changePos();
     updatePrevBoardState();
     delay(100);
     getBoardState();
@@ -119,6 +120,9 @@ void mainLoop() {
     secondPieceMoved = boardStateChanged(x2, y2);
   }
 
+  // turn off leds
+  allLEDsOff();
+  
   // if piece x1, y1 is placed back on its original position
   if (x1 == x2 && y1 == y2) {
     Serial.println("piece moved back to original position");
@@ -207,7 +211,7 @@ bool userTurn() {
 
 bool legalMove(int x1, int y1, int x2, int y2) {
   // send a request to the computer to check if the move is legal
-  sendCommand("checkMove", String(x1) + "," + String(y1) + "," + String(x2) + "," + String(y2));
+  sendCommand("checkMove", "(" + String(x1) + "," + String(y1) + ") to (" + String(x2) +  "," + String(y2) + ")");
   // wait for a response from the computer
   while (Serial.available() == 0);
   String response = Serial.readStringUntil('\n'); // read the response from the computer
@@ -220,7 +224,7 @@ bool legalMove(int x1, int y1, int x2, int y2) {
 
 void updateBoard(int x1, int y1, int x2, int y2) {
   // send a request to the computer to update the board state
-  sendCommand("updateBoard", String(x1) + "," + String(y1) + "," + String(x2) + "," + String(y2));
+  sendCommand("updateBoard", "(" + String(x1) + "," + String(y1) + ") to (" + String(x2) +  "," + String(y2) + ")");
   // wait for a response from the computer
   while (Serial.available() == 0);
   String response = Serial.readStringUntil('\n'); // read the response from the computer
@@ -241,7 +245,7 @@ void updatePrevBoardState() {
 //=================================================================================================//
 
 void allLEDsOn() {
-  strip.fill(WHITE, 0, N_LEDS);
+  strip.fill(RED, 0, N_LEDS);
   strip.show();
 }
 
