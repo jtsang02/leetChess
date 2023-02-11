@@ -6,8 +6,8 @@
 #define BOARD_PIN 12                // pin for the neopixel strip
 String msg = "starting board...";         // string to read and print serial commands
 
-int columnPins[] = {2, 3, 4, 5, 6, 7, 8, 9};  // pins for columns
-int rowPins[] = {23, 25, 27, 29, 31, 33, 35, 37};       // pins for rows
+int columnPins[] = {2, 3, 4, 5, 6, 7, 8, 9};        // pins for columns
+int rowPins[] = {23, 25, 27, 29, 31, 33, 35, 37};   // pins for rows
 
 // map 8 x 8 matrix to 64 LEDs
 const int LED_matrix[BOARD_SIZE][BOARD_SIZE] = {
@@ -70,18 +70,20 @@ void setup() {
 
 void loop() {
   // simulate a move at position (x, y)
-  changePos();
+  // changePos();
   // main code here
   mainLoop();
+  printBoardState();
+  delay(1000);
 }
 
 // main code here runs repeatedly
 void mainLoop() {
   // for testing purposes only - to be removed
-  test();
+  // test();
 
   // get the state of the board - comment out for testing purposes
-  // getBoardState();
+  getBoardState();
   // check if the board state has changed
   int x1, y1;   // coordinates of the changed position
   if (!boardStateChanged(x1, y1)) {
@@ -112,7 +114,7 @@ void mainLoop() {
   // check if the board state has changed again - second piece moved on same turn
   while (!secondPieceMoved) {
     Serial.println("waiting for second piece to move...");
-    changePos();
+    // changePos(); // for testing purposes only
     updatePrevBoardState();
     delay(100);
     getBoardState();
@@ -137,7 +139,6 @@ void mainLoop() {
   }
   // if the move is legal, update the board state send to Raspberry Pi
   updateBoard(x1, x2, y1, y2);
-  printBoardState();
   // update the previous board state - last step
   updatePrevBoardState();
   delay(1000);
