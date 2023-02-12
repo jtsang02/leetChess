@@ -114,7 +114,11 @@ void mainLoop() {
   // check if the board state has changed again - second piece moved on same turn
   while (!secondPieceMoved) {
     Serial.println("waiting for second piece to move...");
+<<<<<<< Updated upstream
     // changePos(); // for testing purposes only
+=======
+    // changePos();
+>>>>>>> Stashed changes
     updatePrevBoardState();
     delay(100);
     getBoardState();
