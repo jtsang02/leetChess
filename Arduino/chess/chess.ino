@@ -139,6 +139,7 @@ void mainLoop() {
   // if piece x1, y1 is placed back on its original position
   if (x1 == x2 && y1 == y2) {
     Serial.println("piece moved back to original position");
+    updatePrevBoardState();
     return;
   } 
   // if piece x1, y1 is placed on a different position
@@ -146,6 +147,7 @@ void mainLoop() {
   if (!legalMove(x1, y1, x2, y2)) {
     Serial.println("illegal move");
     blinkLED(x2, y2, RED, 3);
+    updatePrevBoardState();
     return;
   }
   // if the move is legal, update the board state send to Raspberry Pi
@@ -311,7 +313,6 @@ void highlightPath(String move) {
 
 // print the current board state to the serial monitor for debugging
 void printBoardState() {
-  Serial.println("Board state:");
   Serial.println("-----------");
   for (int i = 0; i < BOARD_SIZE; i++) {
     for (int j = 0; j < BOARD_SIZE; j++)
