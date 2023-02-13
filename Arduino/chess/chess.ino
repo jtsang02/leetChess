@@ -1,13 +1,26 @@
-// test code here: https://www.tinkercad.com/things/iJSs6KtR5pe-leetchess-8-x-8-matrix/editel
+/*
+  chess.ino
+  Created by: Josiah Tsang
+  Date: 2023 02 01
+  Description: TinkerCAD test code for nxn LED matrix, reed switch, and serial communication
+  https://www.tinkercad.com/things/iJSs6KtR5pe-leetchess-8-x-8-matrix/editel
+*/
 #include <Adafruit_NeoPixel.h>
 
-#define BOARD_SIZE 8                // number of columns and rows in the board
 #define N_LEDS 64                   // number of individual LEDs in one neopixel strip
-#define BOARD_PIN 12                // pin for the neopixel strip
-String msg = "starting board...";         // string to read and print serial commands
+#define BOARD_SIZE 8
+#define BOARD_PIN 13               // pin for the neopixel strip
+#define A0 14
+#define A1 15
+#define A2 16
+#define A3 17
+#define A4 18
+#define A5 19
 
-int columnPins[] = {2, 3, 4, 5, 6, 7, 8, 9};        // pins for columns
-int rowPins[] = {23, 25, 27, 29, 31, 33, 35, 37};   // pins for rows
+String msg = "starting board...";         // string to read and print serial commands
+int columnPins[] = { 2, 3, 4, 5, 6, 7, 8, 9 };      // pins for columns
+int rowPins[] = { 19, 18, 17, 16, 15, 14, 11, 10 };      // pins for rows
+// int BOARD_SIZE = sizeof(rowPins) / sizeof(int); // size of the board
 
 // map 8 x 8 matrix to 64 LEDs
 const int LED_matrix[BOARD_SIZE][BOARD_SIZE] = {
@@ -79,8 +92,7 @@ void loop() {
 
 // main code here runs repeatedly
 void mainLoop() {
-  // for testing purposes only - to be removed
-  // test();
+  // test();  // for testing purposes only - to be removed
 
   // get the state of the board - comment out for testing purposes
   getBoardState();
@@ -114,11 +126,6 @@ void mainLoop() {
   // check if the board state has changed again - second piece moved on same turn
   while (!secondPieceMoved) {
     Serial.println("waiting for second piece to move...");
-<<<<<<< Updated upstream
-    // changePos(); // for testing purposes only
-=======
-    // changePos();
->>>>>>> Stashed changes
     updatePrevBoardState();
     delay(100);
     getBoardState();
@@ -154,10 +161,10 @@ void mainLoop() {
 
 void initializeBoard() {
   // initialize columns to output
-  for (int i = 0; i < sizeof(columnPins) / sizeof(int); i++)
+  for (int i = 0; i < BOARD_SIZE; i++)
     pinMode(columnPins[i], OUTPUT);
   // initialize rows to input
-  for (int i = 0; i < sizeof(rowPins) / sizeof(int); i++)
+  for (int i = 0; i < BOARD_SIZE; i++)
     pinMode(rowPins[i], INPUT);
 
   // initialize board state to initial board state
@@ -168,12 +175,12 @@ void initializeBoard() {
 
 void getBoardState() {
   // loop through columns
-  for (int i = 0; i < sizeof(columnPins) / sizeof(int); i++) {
+  for (int i = 0; i < BOARD_SIZE; i++) {
     // set column to high
     digitalWrite(columnPins[i], HIGH);
 
     // loop through rows
-    for (int j = 0; j < sizeof(rowPins) / sizeof(int); j++) {
+    for (int j = 0; j < BOARD_SIZE; j++) {
       // if the row is high, set the corresponding board state to 1
       if (digitalRead(rowPins[j]) == HIGH)
         board[i][j] = 1;
@@ -302,13 +309,16 @@ void highlightPath(String move) {
 // functions to print to serial monitor for debugging
 //=================================================================================================//
 
-// print the board state to the serial monitor for debugging
+// print the current board state to the serial monitor for debugging
 void printBoardState() {
+  Serial.println("Board state:");
+  Serial.println("-----------");
   for (int i = 0; i < BOARD_SIZE; i++) {
     for (int j = 0; j < BOARD_SIZE; j++)
       Serial.print(board[i][j]);
     Serial.println();
   }
+  Serial.println("-----------");
 }
 
 // print the LED matrix to the serial monitor for debugging

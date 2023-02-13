@@ -1,13 +1,23 @@
 /*
-  Test of 6 x 6 Reed Switches
-  using input pins 2-7 for columns
-  and input pins 8-13 for rows
+  nxnTest.ino
+  Created by: Josiah Tsang
+  Date: 2023 02 01
+  Description: Test code for nxn LED matrix
+  https://www.tinkercad.com/things/iJSs6KtR5pe-leetchess-8-x-8-matrix/editel
 */
+
 #include <Adafruit_NeoPixel.h>
 
-#define BOARD_PIN 12               // pin for the neopixel strip
-int columnPins[] = { 2, 3 };      // pins for columns
-int rowPins[] = { 8, 9 };      // pins for rows
+#define BOARD_PIN 13               // pin for the neopixel strip
+#define A0 14
+#define A1 15
+#define A2 16
+#define A3 17
+#define A4 18
+#define A5 19
+
+int columnPins[] = { 2, 3, 4, 5, 6, 7, 8, 9 };      // pins for columns
+int rowPins[] = { 19, 18, 17, 16, 15, 14, 11, 10 };      // pins for rows
 int BOARD_SIZE = sizeof(rowPins) / sizeof(int); // size of the board
 
 void setup()
@@ -22,6 +32,7 @@ void setup()
     // initialize rows to output
     for (int i = 0; i < BOARD_SIZE; i++)
         pinMode(rowPins[i], OUTPUT);
+  
 
     /*
       initialize neopixel strip here // TODO
