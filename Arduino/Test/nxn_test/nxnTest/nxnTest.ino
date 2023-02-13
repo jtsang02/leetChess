@@ -3,13 +3,12 @@
   using input pins 2-7 for columns
   and input pins 8-13 for rows
 */
-
 #include <Adafruit_NeoPixel.h>
-#define BOARD_SIZE 2               // number of columns and rows in the board
-#define N_LEDS 8 * 8               // number of individual LEDs in one neopixel strip
+
 #define BOARD_PIN 12               // pin for the neopixel strip
 int columnPins[] = { 2, 3 };      // pins for columns
 int rowPins[] = { 8, 9 };      // pins for rows
+int BOARD_SIZE = sizeof(rowPins) / sizeof(int); // size of the board
 
 void setup()
 {
@@ -17,11 +16,11 @@ void setup()
     Serial.begin(9600);
 
     // initialize columns to input
-    for (int i = 0; i < sizeof(columnPins) / sizeof(int); i++)
+    for (int i = 0; i < BOARD_SIZE; i++)
         pinMode(columnPins[i], INPUT);
 
     // initialize rows to output
-    for (int i = 0; i < sizeof(rowPins) / sizeof(int); i++)
+    for (int i = 0; i < BOARD_SIZE; i++)
         pinMode(rowPins[i], OUTPUT);
 
     /*
@@ -38,10 +37,10 @@ void loop()
 
 void checkGrid()
 {
-    for (int i = 0; i < sizeof(rowPins) / sizeof(int); i++)
+    for (int i = 0; i < BOARD_SIZE; i++)
     {
         digitalWrite(rowPins[i], HIGH);
-        for (int j = 0; j < sizeof(rowPins) / sizeof(int); j++)
+        for (int j = 0; j < BOARD_SIZE; j++)
         {
             if (digitalRead(columnPins[j]) == HIGH)
                 setLED(i, j); // TODO: update to setLED(x, y) function
@@ -70,8 +69,6 @@ void setLED(int x, int y)
     Serial.print(',');
     Serial.print(y);
     Serial.println();
-    // strip.setPixelColor(matrix[x][y], c);
-    // strip.show();
 }
 
 // turn off a single LED
@@ -82,6 +79,4 @@ void clearLED(int x, int y)
     Serial.print(',');
     Serial.print(y);
     Serial.println();
-    // strip.setPixelColor(matrix[x][y], strip.Color(0, 0, 0, 0));
-    // strip.show();
 }
