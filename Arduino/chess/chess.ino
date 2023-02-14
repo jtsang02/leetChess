@@ -1,16 +1,15 @@
-// test code here: https://www.tinkercad.com/things/iJSs6KtR5pe-leetchess-8-x-8-matrix/editel
 #include <Adafruit_NeoPixel.h>
 
-#define BOARD_SIZE 8                // number of columns and rows in the board
+#define BOARD_SIZE 5                // number of columns and rows in the board
 #define N_LEDS 64                   // number of individual LEDs in one neopixel strip
 #define BOARD_PIN 12                // pin for the neopixel strip
 String msg = "starting board...";         // string to read and print serial commands
 
-int columnPins[] = {2, 3, 4, 5, 6, 7, 8, 9};        // pins for columns
-int rowPins[] = {23, 25, 27, 29, 31, 33, 35, 37};   // pins for rows
+int columnPins[]  = {2, 3, 4, 5, 6};        // pins for columns on Arduino Mega
+int rowPins[]     = {23, 25, 27, 29, 31};   // pins for rows on Arduino Mega
 
 // map 8 x 8 matrix to 64 LEDs
-const int LED_matrix[BOARD_SIZE][BOARD_SIZE] = {
+const int LED_matrix[8][8] = {
   {0, 1, 2, 3, 4, 5, 6, 7},
   {15, 14, 13, 12, 11, 10, 9, 8},
   {16, 17, 18, 19, 20, 21, 22, 23},
@@ -25,17 +24,6 @@ const int LED_matrix[BOARD_SIZE][BOARD_SIZE] = {
 int board[BOARD_SIZE][BOARD_SIZE];
 // boolean matrix to store the previous state of the board
 int prevBoard[BOARD_SIZE][BOARD_SIZE];
-
-const int initBoard[BOARD_SIZE][BOARD_SIZE] = {
-  {1, 1, 1, 1, 1, 1, 1, 1},
-  {1, 1, 1, 1, 1, 1, 1, 1},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0},
-  {1, 1, 1, 1, 1, 1, 1, 1},
-  {1, 1, 1, 1, 1, 1, 1, 1}
-};
 
 // create neopixel object
 // Argument 1 - Number of pixels in NeoPixel strip
@@ -153,36 +141,35 @@ void mainLoop() {
 //=================================================================================================//
 
 void initializeBoard() {
-  // initialize columns to output
-  for (int i = 0; i < sizeof(columnPins) / sizeof(int); i++)
-    pinMode(columnPins[i], OUTPUT);
-  // initialize rows to input
-  for (int i = 0; i < sizeof(rowPins) / sizeof(int); i++)
-    pinMode(rowPins[i], INPUT);
-
-  // initialize board state to initial board state
+  // initialize columns to input
   for (int i = 0; i < BOARD_SIZE; i++)
-    for (int j = 0; j < BOARD_SIZE; j++)
-      board[i][j] = initBoard[i][j];
+    pinMode(columnPins[i], INPUT);
+  // initialize rows to output
+  for (int i = 0; i < BOARD_SIZE; i++)
+    pinMode(rowPins[i], OUTPUT);
+
+  // initialize board state
+  getBoardState();
+  updatePrevBoardState();
 }
 
 void getBoardState() {
   // loop through columns
-  for (int i = 0; i < sizeof(columnPins) / sizeof(int); i++) {
+  for (int i = 0; i < BOARD_SIZE; i++) {
     // set column to high
-    digitalWrite(columnPins[i], HIGH);
+    digitalWrite(rowPins[i], HIGH);
 
     // loop through rows
-    for (int j = 0; j < sizeof(rowPins) / sizeof(int); j++) {
+    for (int j = 0; j < BOARD_SIZE / BOARD_SIZE; j++) {
       // if the row is high, set the corresponding board state to 1
-      if (digitalRead(rowPins[j]) == HIGH)
+      if (digitalRead(columnPins[j]) == HIGH)
         board[i][j] = 1;
       // if the row is low, set the corresponding board state to 0
       else
         board[i][j] = 0;
     }
     // set column to low
-    digitalWrite(columnPins[i], LOW);
+    digitalWrite(rowPins[i], LOW);
   }
 }
 
