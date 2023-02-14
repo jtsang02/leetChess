@@ -1,3 +1,10 @@
+/*
+  chess.ino
+  Created by: Josiah Tsang
+  Date: 2023 02 14
+  Description: code for nxn LED matrix, reed switch, and serial communication
+*/
+
 #include <Adafruit_NeoPixel.h>
 
 #define BOARD_SIZE 5                // number of columns and rows in the board
