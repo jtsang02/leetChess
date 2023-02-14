@@ -48,29 +48,15 @@ void loop()
 
 void checkGrid()
 {
-    for (int i = 0; i < BOARD_SIZE; i++)
-    {
+    for (int i = 0; i < BOARD_SIZE; i++) {
         digitalWrite(rowPins[i], HIGH);
         for (int j = 0; j < BOARD_SIZE; j++)
         {
             if (digitalRead(columnPins[j]) == HIGH)
                 setLED(i, j); // TODO: update to setLED(x, y) function
-            // else
-            //     clearLED(i, j); // TODO: update to clearLED(x, y) function
         }
         digitalWrite(rowPins[i], LOW);
     }
-    
-    // columns only
-
-    // digitalWrite(2, HIGH);
-    // // digitalWrite(3, LOW);
-    // if (digitalRead(6) == HIGH)
-    //   setLED(0, 0);
-    
-    // if (digitalRead(7) == HIGH)
-    //   setLED(0, 1);    
-
 }
 
 void setLED(int x, int y)
