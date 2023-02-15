@@ -6,7 +6,7 @@
 #include <Adafruit_NeoPixel.h>
 
 #define BOARD_PIN 12               // pin for the neopixel strip
-int columnPins[] = { 2, 3, 4, 5, 7 };      // pins for columns
+int columnPins[] = { 2, 3, 4, 5, 6 };      // pins for columns
 int rowPins[] = { 23, 25, 27, 29, 31};      // pins for rows
 int BOARD_SIZE = sizeof(rowPins) / sizeof(int); // size of the board
 
@@ -62,9 +62,9 @@ void checkGrid()
 
 }
 
-void setLED(int x, int y)
+void setLED(int y, int x)
 {
-    Serial.print("LED is on at: ");
+    Serial.print("Piece is on: ");
     Serial.print(x);
     Serial.print(',');
     Serial.print(y);
@@ -74,7 +74,7 @@ void setLED(int x, int y)
 // turn off a single LED
 void clearLED(int x, int y)
 {
-    Serial.print("LED is off at: ");
+    Serial.print("Piece is off: ");
     Serial.print(x);
     Serial.print(',');
     Serial.print(y);

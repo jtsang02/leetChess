@@ -9,11 +9,12 @@
 
 #define BOARD_SIZE 5                // number of columns and rows in the board
 #define N_LEDS 64                   // number of individual LEDs in one neopixel strip
-#define BOARD_PIN 12                // pin for the neopixel strip
+#define BOARD_PIN 7                // pin for the neopixel strip
 String msg = "starting board...";         // string to read and print serial commands
 
-int columnPins[]  = {2, 3, 4, 5, 6};        // pins for columns on Arduino Mega
-int rowPins[]     = {23, 25, 27, 29, 31};   // pins for rows on Arduino Mega
+int columnPins[BOARD_SIZE]  = {2, 3, 4, 5, 6};        // pins for columns on Arduino Mega
+int rowPins[BOARD_SIZE]     = {23, 25, 27, 29, 31};   // pins for rows on Arduino Mega
+// bool setupMode = true;      // true if the board is in setup mode
 
 // map 8 x 8 matrix to 64 LEDs
 const int LED_matrix[8][8] = {
@@ -64,21 +65,30 @@ void setup() {
 }
 
 void loop() {
-  // simulate a move at position (x, y)
-  // changePos();
+  // check if user is setting up board
+  if (setupBoard()) {
+    getBoardState();
+    updatePrevBoardState();
+    Serial.println("Setup mode:");
+    printBoardState();
+    delay(1000);
+    return;
+  }
+
   // main code here
   mainLoop();
-  printBoardState();
+  // printBoardState();
   delay(1000);
 }
 
 // main code here runs repeatedly
 void mainLoop() {
-  // for testing purposes only - to be removed
-  // test();
+  // test();  // for testing purposes only - to be removed
 
   // get the state of the board - comment out for testing purposes
+  delay(1000);
   getBoardState();
+  printBoardState();  // for testing
   // check if the board state has changed
   int x1, y1;   // coordinates of the changed position
   if (!boardStateChanged(x1, y1)) {
@@ -109,11 +119,6 @@ void mainLoop() {
   // check if the board state has changed again - second piece moved on same turn
   while (!secondPieceMoved) {
     Serial.println("waiting for second piece to move...");
-<<<<<<< Updated upstream
-    // changePos(); // for testing purposes only
-=======
-    // changePos();
->>>>>>> Stashed changes
     updatePrevBoardState();
     delay(100);
     getBoardState();
@@ -127,6 +132,8 @@ void mainLoop() {
   // if piece x1, y1 is placed back on its original position
   if (x1 == x2 && y1 == y2) {
     Serial.println("piece moved back to original position");
+    getBoardState();
+    updatePrevBoardState();
     return;
   } 
   // if piece x1, y1 is placed on a different position
@@ -134,10 +141,13 @@ void mainLoop() {
   if (!legalMove(x1, y1, x2, y2)) {
     Serial.println("illegal move");
     blinkLED(x2, y2, RED, 3);
+    getBoardState();
+    updatePrevBoardState();
     return;
   }
   // if the move is legal, update the board state send to Raspberry Pi
   updateBoard(x1, x2, y1, y2);
+
   // update the previous board state - last step
   updatePrevBoardState();
   delay(1000);
@@ -146,6 +156,24 @@ void mainLoop() {
 //=================================================================================================//
 // functions to update/track the board state
 //=================================================================================================//
+
+bool setupBoard() {
+    if (Serial.available() > 0) {
+    // read serial command
+    msg = Serial.readStringUntil('\n');
+    // check if user is setting up board
+    if (msg == "setup") {
+      Serial.println("setup mode");
+      return true;
+    }
+    // check if user is done setting up board
+    else if (msg == "play") {
+      Serial.println("done setup mode");
+      return false;
+    }
+    return true;
+  }
+}
 
 void initializeBoard() {
   // initialize columns to input
@@ -167,7 +195,7 @@ void getBoardState() {
     digitalWrite(rowPins[i], HIGH);
 
     // loop through rows
-    for (int j = 0; j < BOARD_SIZE / BOARD_SIZE; j++) {
+    for (int j = 0; j < BOARD_SIZE; j++) {
       // if the row is high, set the corresponding board state to 1
       if (digitalRead(columnPins[j]) == HIGH)
         board[i][j] = 1;
@@ -210,7 +238,7 @@ bool userTurn() {
 
 bool legalMove(int x1, int y1, int x2, int y2) {
   // send a request to the computer to check if the move is legal
-  sendCommand("checkMove", "(" + String(x1) + "," + String(y1) + ") to (" + String(x2) +  "," + String(y2) + ")");
+  sendCommand("isLegalMove", "(" + String(x1) + "," + String(y1) + ") to (" + String(x2) +  "," + String(y2) + ")");
   // wait for a response from the computer
   while (Serial.available() == 0);
   String response = Serial.readStringUntil('\n'); // read the response from the computer
@@ -244,7 +272,7 @@ void updatePrevBoardState() {
 //=================================================================================================//
 
 void allLEDsOn() {
-  strip.fill(RED, 0, N_LEDS);
+  strip.fill(WHITE, 0, N_LEDS);
   strip.show();
 }
 
@@ -298,11 +326,13 @@ void highlightPath(String move) {
 
 // print the board state to the serial monitor for debugging
 void printBoardState() {
+  Serial.println("-----------");
   for (int i = 0; i < BOARD_SIZE; i++) {
     for (int j = 0; j < BOARD_SIZE; j++)
       Serial.print(board[i][j]);
     Serial.println();
   }
+  Serial.println("-----------");
 }
 
 // print the LED matrix to the serial monitor for debugging
