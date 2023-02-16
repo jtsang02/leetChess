@@ -240,17 +240,18 @@ void setUpBoard(){
 }
 
 void waitForPiToStart(){
-    Serial.println("Function:waitForPiToStart...   ");
+    //Serial.println("Function:waitForPiToStart...   ");
     int chessSquaresLit = 0;
     while (true){
       delay(1000);
+      //Serial.print (Serial.available());
       if (Serial.available() > 0){
         String data = Serial.readStringUntil('\n');
-        Serial.println(data);
+        //Serial.println(data);
         if (data.startsWith("heyArduinoChooseMode")){
-          while (chessSquaresLit < 64){
-            delay(15);
-          }
+//          while (chessSquaresLit < 64){
+//            delay(15);
+//          }
           //turn on the control panels lights
           
           while (true) {
