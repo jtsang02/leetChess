@@ -5,27 +5,23 @@
 */
 #include <Adafruit_NeoPixel.h>
 
+#define BOARD_SIZE 7
 #define BOARD_PIN 12               // pin for the neopixel strip
-int columnPins[] = { 2, 3, 4, 5, 6 };      // pins for columns
-int rowPins[] = { 23, 25, 27, 29, 31};      // pins for rows
-int BOARD_SIZE = sizeof(rowPins) / sizeof(int); // size of the board
+int columnPins[] = { 2, 3, 4, 5, 6, 7, 8 };      // pins for columns
+int rowPins[] = { 23, 25, 29, 31, 33, 35, 37};      // pins for rows
 
 void setup()
 {
     // initialize serial communication
     Serial.begin(9600);
 
-    // initialize columns to input
+    // initialize columns to output
     for (int i = 0; i < BOARD_SIZE; i++)
         pinMode(columnPins[i], INPUT);
 
-    // initialize rows to output
+    // initialize rows to input
     for (int i = 0; i < BOARD_SIZE; i++)
         pinMode(rowPins[i], OUTPUT);
-
-    /*
-      initialize neopixel strip here // TODO
-    */
 }
 
 void loop()
@@ -49,17 +45,6 @@ void checkGrid()
         }
         digitalWrite(rowPins[i], LOW);
     }
-    
-    // columns only
-
-    // digitalWrite(2, HIGH);
-    // // digitalWrite(3, LOW);
-    // if (digitalRead(6) == HIGH)
-    //   setLED(0, 0);
-    
-    // if (digitalRead(7) == HIGH)
-    //   setLED(0, 1);    
-
 }
 
 void setLED(int y, int x)
